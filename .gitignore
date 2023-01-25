@@ -1,0 +1,11 @@
+/fonts/
+/backgrounds/
+.idea/deployment.xml
+.idea/font_square.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+tps/__pycache__/__init__.cpython-39.pyc
+tps/__pycache__/functions.cpython-39.pyc
+tps/__pycache__/instance.cpython-39.pyc
