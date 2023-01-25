@@ -10,11 +10,12 @@ def main():
     num_splits = len(dirs) // num_fonts_per_split
 
     for i in tqdm(range(num_splits)):
-        current_dirs = dirs[i:i+num_fonts_per_split]
-        split_path = Path(dataset_path, f'{i*100:05d}')
+        start_idx = i*num_fonts_per_split
+        current_dirs = dirs[start_idx:start_idx+num_fonts_per_split]
+        split_path = Path(dataset_path, f'{i*104:05d}')
         split_path.mkdir()
-        for dir in current_dirs:
-            dir.rename(Path(split_path, dir.stem))
+        for current_dir in current_dirs:
+            current_dir.rename(Path(split_path, current_dir.stem))
 
     print('Done!')
 
