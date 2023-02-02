@@ -4,13 +4,13 @@
 #SBATCH --error=/homes/fquattrini/fontsquare/job_logs/generation_%j.err
 #SBATCH --open-mode=append
 #SBATCH --partition=prod
-#SBATCH --time=0:30:00
+#SBATCH --time=2:30:00
 #SBATCH --gres=gpu:0
-#SBATCH --array=0-103
+#SBATCH --array=0-2
 #SBATCH --cpus-per-task=2
 #SBATCH --nodes=1
 #SBATCH --mem=4096
-#SBATCH --begin=now+2hour
+#SBATCH --begin=now
 
 . /usr/local/anaconda3/etc/profile.d/conda.sh
 conda deactivate

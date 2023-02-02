@@ -495,7 +495,7 @@ class SaveHistory:
             F.to_pil_image(sample['img']).save(path + '.jpg')
         elif self.out_type == 'img_bk_mask':
             F.to_pil_image(sample['img']).save(Path(self.full_dir, f"{sample['text']}.jpg"))
-            F.to_pil_image(sample['font_img']).save(Path(self.mask_dir, f"{sample['text']}_mask.jpg"))
+            F.to_pil_image(sample['font_img']).save(Path(self.mask_dir, f"{sample['text']}_mask.png"))
             F.to_pil_image(sample['bg']).save(Path(self.bg_dir, f"{sample['text']}_bg.jpg"))
         else:
             raise NotImplementedError
