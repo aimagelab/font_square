@@ -101,8 +101,9 @@ if __name__ == '__main__':
     # parser.add_argument('--seed', default=742, type=int)  # NU
     parser.add_argument('--font_id', type=int)
 
+    parser.add_argument('--num_fonts', type=int, default=300)
     parser.add_argument('--generate_square_dataset', action='store_true')
-    parser.add_argument('--num_words_per_font', type=int, default=100)
+    parser.add_argument('--num_words_per_font', type=int, default=300)
     parser.add_argument('--out_height', type=int, default=64)
     parser.add_argument('--font_split_id', type=int)
     parser.add_argument('--font_split_size', type=int)
@@ -116,8 +117,12 @@ if __name__ == '__main__':
 
     # rSeed(args.seed)
 
-    available_fonts = sorted(
-        [os.path.join(args.fonts, font) for font in os.listdir(args.fonts) if font.endswith(('.ttf', '.otf'))])
+    # Shuffle the fonts list
+    available_fonts = [
+        os.path.join(args.fonts, font) for font in os.listdir(args.fonts) if font.endswith(('.ttf', '.otf'))]
+
+    random.shuffle(available_fonts)
+    available_fonts = available_fonts[:args.num_fonts]
 
     num_words = len(available_fonts) if args.generate_square_dataset else args.num_words_per_font
     dataset = FontsDataset(num_words, None)
