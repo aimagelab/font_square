@@ -117,12 +117,12 @@ if __name__ == '__main__':
 
     # rSeed(args.seed)
 
-    # Shuffle the fonts list
-    available_fonts = [
-        os.path.join(args.fonts, font) for font in os.listdir(args.fonts) if font.endswith(('.ttf', '.otf'))]
+    print(f'Generating {args.num_words_per_font} words for each font. Total fonts: {args.num_fonts}')
 
-    random.shuffle(available_fonts)
-    available_fonts = available_fonts[:args.num_fonts]
+    # Shuffle the fonts list
+    available_fonts = sorted(
+        [os.path.join(args.fonts, font) for font in os.listdir(args.fonts) if font.endswith(('.ttf', '.otf'))]
+    )[:args.num_fonts]
 
     num_words = len(available_fonts) if args.generate_square_dataset else args.num_words_per_font
     dataset = FontsDataset(num_words, None)
@@ -148,6 +148,7 @@ if __name__ == '__main__':
         font_dict = {int(os.path.basename(font).split('_', 1)[0]): font for font in available_fonts}
         start = args.font_split_id * args.font_split_size
         end = start + args.font_split_size
+        print(f'Generating fonts {start} - {end} ({end - start}). JobID: {args.font_split_id}')
         available_fonts = [font_dict[font_id] for font_id in range(start, end)]
 
     for i, font_path in enumerate(available_fonts):
