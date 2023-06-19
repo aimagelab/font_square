@@ -78,7 +78,7 @@ class Font2(Dataset):
     
     def collate_fn(self, batch):
         imgs, widths, font_ids, words = zip(*batch)
-        max_width = max(widths)
+        max_width = max(img.shape[2] for img in imgs)
         imgs = [torch.nn.functional.pad(img, (0, int(max_width - img.shape[2]))) for img in imgs]
         imgs = torch.stack(imgs)
         widths = torch.Tensor(widths)
