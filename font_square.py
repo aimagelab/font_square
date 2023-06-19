@@ -35,7 +35,7 @@ class Font2(Dataset):
             end = min(x + self.block_size, len(self.words) * len(self.fonts))
             self.blocks.append(f'{start:09}_{end:09d}.npz')
         self.loaded_block = None
-        self.last_loaded_time = time.perf_counter()
+        self.last_loaded_time = None
         self.load_next()
 
 
@@ -51,7 +51,6 @@ class Font2(Dataset):
         self.last_loaded_time = time.perf_counter()
 
         curr_block = self.blocks_path / self.blocks[idx // self.block_size]
-        print(f'Loading block {curr_block}')
         if not curr_block.exists() and self.auto_download:
             data = self.download(curr_block)
             data = np.load(io.BytesIO(data.content))
