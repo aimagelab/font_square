@@ -19,6 +19,8 @@ class Font2(Dataset):
         self.store_on_disk = store_on_disk
         self.auto_download = auto_download
         self.blocks_path = self.path / 'blocks'
+        self.start_idx = 0
+
         with open(self.path / 'fonts.json') as f:
             fonts = json.load(f)
         self.fonts = {int(font): fonts[font] for font in fonts}
@@ -40,7 +42,7 @@ class Font2(Dataset):
 
 
     def __len__(self):
-        return len(self.words) * len(self.fonts)
+        return len(self.words) * len(self.fonts) - self.start_idx
     
     def load_next(self, idx=0):
         if self.loaded_block == idx // self.block_size:
@@ -86,8 +88,10 @@ class Font2(Dataset):
         return imgs, widths, font_ids, words
     
     def __getitem__(self, idx):
+        idx = idx + self.start_idx
         self.load_next(idx)
 
+        idx = idx % self.block_size
         width_start = self.images_wide[idx]
         width_end = self.images_wide[idx + 1]
         width = width_end - width_start
