@@ -23,7 +23,7 @@ We suggest you to run the above lines by keeping `shuffle=False`: this way, the 
 Please note that you can also download the dataset (already shuffled and with the same augmentations as presented in the paper) manually from the [releases](https://github.com/aimagelab/font_square/releases), where can also find the checkpoints of a ResNet-18 and a VGG-19 trained on it.
 
 ## Load checkpoints
-We uploaded the checkpoints of the model trained on $Font^2$ in the [releases](https://github.com/aimagelab/font_square/releases)
+You can find the checkpoints of the models trained on $Font^2$ in the [releases](https://github.com/aimagelab/font_square/releases)
 ### ResNet-18
 ```python
 import torch
