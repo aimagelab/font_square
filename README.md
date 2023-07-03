@@ -62,5 +62,5 @@ class ToInceptionV3Input:
         w_rep = math.ceil(self.size / x.shape[2])
         return x.repeat(1, h_rep, w_rep)[:, :self.size, :self.size]
 ```
-The `ToInceptionV3Input` transform repeats the input image vertically and horizontally enough times to cover the whole input image and trim the excess to fit the desired shape.
+The `ToInceptionV3Input` transform repeats the input image vertically and horizontally to cover the whole input image and trims the excess to fit the desired shape.
 
