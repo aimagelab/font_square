@@ -63,3 +63,10 @@ class ToInceptionV3Input:
 ```
 The `ToInceptionV3Input` transform repeats the input image vertically and horizontally to cover the whole input image and trims the excess to fit the desired shape.
 
+## Train with a subset of the dataset
+If you want to train on a subset of the dataset, you can define `fonts_ids` and `words_ids` as follows:
+```python
+dataset = Font2('path/to/dataset', store_on_disk=True, auto_download=True, fonts_ids=[0, 1, 2], words_ids=[0, 1, 2])
+loader = DataLoader(dataset, batch_size=32, num_workers=1, collate_fn=dataset.collate_fn)
+```	
+**WARNING**: Since each block is evenly distributed among the fonts and the words training on a subset of the dataset, the number of available samples per block will be reduced. (e.g., if you train on 1000 fonts and 1000 words, it means that you are using $ (1000 \times 1000) / (10400 * 10400) \approx 0.009245$ of the dataset. Therefore, each block contains roughly $0.009245 \times 200000 \approx 1,849.11$ available samples).
