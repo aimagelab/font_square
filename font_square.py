@@ -1,72 +1,66 @@
 import io
 import time
 import json
+from typing import Iterator
 import torch
 import requests
 import warnings
 import numpy as np
 from pathlib import Path
 from torchvision.transforms import ToTensor
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import IterableDataset, DataLoader
 
 
-class Font2(Dataset):
-    def __init__(self, path, transform=ToTensor(), store_on_disk=False, auto_download=False):
-        super().__init__()
+class Font2(IterableDataset):
+    def __init__(self, path, transform=ToTensor(), nameset='train', fonts_ids=None,
+                 words_ids=None, store_on_disk=False, auto_download=False, shuffle=False):
+        super(Font2).__init__()
+        self.blocks_base_url = 'https://github.com/aimagelab/font_square/releases/download/Dataset/'
 
         self.path = Path(path)
         self.transform = transform
         self.store_on_disk = store_on_disk
         self.auto_download = auto_download
         self.blocks_path = self.path / 'blocks'
-        self.start_idx = 0
+        self.idx = None
+        self.shuffle = shuffle
+        
+        self.num_workers = None
+        self.worker_id = None
+        self.worker_blocks = None
+        self.worker_sizes = None
 
         with open(self.path / 'fonts.json') as f:
             fonts = json.load(f)
         self.fonts = {int(font): fonts[font] for font in fonts}
+        self.fonts_ids = set(fonts_ids) if fonts_ids is not None else set(self.fonts.keys())
     
         with open(self.path / 'words.json') as f:
             words = json.load(f)
         self.words = {int(word): words[word] for word in words}
+        self.words_ids = set(words_ids) if words_ids is not None else set(self.words.keys())
 
-        self.block_size = 200_000
-        self.blocks_base_url = 'https://github.com/aimagelab/font_square/releases/download/Dataset/'
-        self.blocks = []
-        for x in range(0, len(self.words) * len(self.fonts), self.block_size):
-            start = x
-            end = min(x + self.block_size, len(self.words) * len(self.fonts))
-            self.blocks.append(f'{start:09}_{end:09d}.npz')
-        self.loaded_block = None
-        self.last_loaded_time = None
-        self.load_next()
+        with open(self.path / 'splits.json') as f:
+            self.blocks = json.load(f)[nameset]
+        self.blocks, self.sizes = zip(*self.blocks)
 
-
-    def __len__(self):
-        return len(self.words) * len(self.fonts) - self.start_idx
     
-    def load_next(self, idx=0):
-        if self.loaded_block == idx // self.block_size:
-            return
-        if self.last_loaded_time is not None and time.perf_counter() - self.last_loaded_time < 10:
-            warnings.warn('Loading blocks too fast. You are not reading the dataset '
-                          'sequentially, this method will heavly slow down the performance.')
-        self.last_loaded_time = time.perf_counter()
-
-        curr_block = self.blocks_path / self.blocks[idx // self.block_size]
-        if not curr_block.exists() and self.auto_download:
-            data = self.download(curr_block)
+    def load_block(self, idx=0):
+        assert self.worker_blocks is not None, 'You must call assign_blocks before load_block'
+        block_to_load = self.blocks_path / self.worker_blocks[idx]
+        if not block_to_load.exists() and self.auto_download:
+            data = self.download(block_to_load)
             data = np.load(io.BytesIO(data.content))
-        elif curr_block.exists():
-            data = np.load(curr_block)
+        elif block_to_load.exists():
+            data = np.load(block_to_load)
         else:
-            raise FileNotFoundError(f'Block {curr_block} not found. Download it manually from the repo or set auto_download=True.')
+            raise FileNotFoundError(f'Block {block_to_load} not found. Download it manually from the repo or set auto_download=True.')
 
         self.images = data['images']
         self.images_wide = data['width']
         self.images_wide = np.cumsum(self.images_wide)
         self.images_wide = np.concatenate([np.array([0,], dtype=self.images_wide.dtype), self.images_wide])
         self.images_idx = data['idx']
-        self.loaded_block = idx // self.block_size
     
     def download(self, block):
         url = self.blocks_base_url + block.name
@@ -88,10 +82,6 @@ class Font2(Dataset):
         return imgs, widths, font_ids, words
     
     def __getitem__(self, idx):
-        idx = idx + self.start_idx
-        self.load_next(idx)
-
-        idx = idx % self.block_size
         width_start = self.images_wide[idx]
         width_end = self.images_wide[idx + 1]
         width = width_end - width_start
@@ -105,13 +95,51 @@ class Font2(Dataset):
             img = self.transform(img)
 
         return img, width, font_id, word
+    
+    def assign_blocks(self):
+        worker_info = torch.utils.data.get_worker_info()
+        self.num_workers = 1 if worker_info is None else worker_info.num_workers
+        self.worker_id = 0 if worker_info is None else worker_info.id
+        self.worker_blocks = list(self.blocks[self.worker_id::self.num_workers])
+        self.worker_sizes = list(self.sizes[self.worker_id::self.num_workers])
+        
+        if self.shuffle:
+            blocks_sizes = list(zip(self.worker_blocks, self.worker_sizes))
+            np.random.shuffle(blocks_sizes)
+            self.worker_blocks, self.worker_sizes = zip(*blocks_sizes)
+    
+    def __iter__(self):
+        self.assign_blocks()
+        
+        if len(self.worker_blocks) > 0:
+            self.idx = 0
+            self.load_block(0)
+        
+        while len(self.worker_blocks) > 0:
+            if self.idx >= len(self.images_idx):
+                self.worker_blocks.pop(0)
+                self.worker_sizes.pop(0)
+                self.idx = 0
+                
+                if len(self.worker_blocks) == 0:
+                    break
+                self.load_block(0)
+                
+            img_idx = self.images_idx[self.idx]
+            font_id = img_idx // len(self.words)
+            word_id = img_idx % len(self.words)
+            
+            if font_id in self.fonts_ids and word_id in self.words_ids:
+                yield self[self.idx]
+            self.idx += 1
 
 if __name__ == '__main__':
-    db = Font2('.', store_on_disk=True, auto_download=True)
-    loader = DataLoader(db, batch_size=32, num_workers=1, collate_fn=db.collate_fn, shuffle=False)
+    db = Font2('.', store_on_disk=True, auto_download=True, nameset='test')
+    loader = DataLoader(db, batch_size=32, num_workers=2, collate_fn=db.collate_fn)
     start = time.perf_counter()
+    counter = 0 
     for i, (imgs, widths, font_ids, words) in enumerate(loader):
-        print(imgs.shape, widths.shape, font_ids.shape, len(words))
-        if i > 1000:
-            break
+        # print(imgs.shape, widths.shape, font_ids.shape, len(words))
+        counter += len(words)
+        print(f'\r{counter}', end='')
     print(f'Elapsed time: {time.perf_counter() - start:.2f}s')
