@@ -72,9 +72,8 @@ loader = DataLoader(db, batch_size=32, num_workers=1, collate_fn=db.collate_fn)
 |              | Classes | Top-1 | Top-5 | Top-10 |
 |--------------|---------|-------|-------|--------|
 | ResNet-18    | 10400   | 79.81 | 94.55 | 96.99  |
-| ResNet-18    |         |       |       |        |
 | VGG-16       | 10400   | 81.72 | 96.24 | 98.12  |
-| Inception-v3 | 10400   |       |       |        |
+| Inception-v3 | 10400   | 82.44 | 95.75 | 97.71  |
 
 ## Train with a subset of the dataset
 If you want to train on a subset of the dataset, you can define `fonts_ids` and `words_ids` as follows:
