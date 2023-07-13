@@ -134,12 +134,17 @@ class Font2(IterableDataset):
             self.idx += 1
 
 if __name__ == '__main__':
-    db = Font2('.', store_on_disk=True, auto_download=True, nameset='test')
+    db = Font2('.', store_on_disk=True, auto_download=True, nameset='train')
     loader = DataLoader(db, batch_size=32, num_workers=2, collate_fn=db.collate_fn)
     start = time.perf_counter()
     counter = 0 
-    for i, (imgs, widths, font_ids, words) in enumerate(loader):
-        # print(imgs.shape, widths.shape, font_ids.shape, len(words))
-        counter += len(words)
-        print(f'\r{counter}', end='')
-    print(f'Elapsed time: {time.perf_counter() - start:.2f}s')
+    try:
+        for i, (imgs, widths, font_ids, words) in enumerate(loader):
+            # print(imgs.shape, widths.shape, font_ids.shape, len(words))
+            counter += len(words)
+            print(f'\rSamples processed: {counter}', end='')
+    except KeyboardInterrupt:
+        pass
+    elps = time.perf_counter() - start
+    print(f'\nElapsed time: {elps:.2f}s')
+    print(f'Images per second: {counter / elps:.2f}')
