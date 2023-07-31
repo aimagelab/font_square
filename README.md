@@ -66,7 +66,7 @@ The `ToInceptionV3Input` transform repeats the input image vertically and horizo
 ### Results
 In the following table there are the **Top-1**, **Top-5**, and **Top-10** accuracy scores on the Font2 Test set.
 ```python
-db = Font2('font_square', store_on_disk=True, auto_download=True, nameset='test')
+dataset = Font2('font_square', store_on_disk=True, auto_download=True, nameset='test')
 loader = DataLoader(db, batch_size=32, num_workers=1, collate_fn=db.collate_fn)
 ```
 |              | Classes | Top-1 | Top-5 | Top-10 |
