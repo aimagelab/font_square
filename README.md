@@ -16,6 +16,9 @@ To obtain the dataset, please run:
 ```python
 dataset = Font2('path/to/dataset', store_on_disk=True, auto_download=True)
 loader = DataLoader(dataset, batch_size=32, num_workers=1, collate_fn=dataset.collate_fn)
+
+for i, (imgs, widths, font_ids, words) in enumerate(loader):
+    print(imgs.shape, widths.shape, font_ids.shape, len(words))
 ```
 This way, the loader will automatically download (`auto_download=True`) and save (`store_on_disk=True`) the data inside the `blocks` folder, at the same level as the `fonts.json` and `words.json` files.
 
